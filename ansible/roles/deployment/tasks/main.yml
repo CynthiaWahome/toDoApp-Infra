@@ -123,6 +123,20 @@
     - log-message-processor
     - frontend
 
+
+# Comment out problematic Maven wrapper COPY commands in Dockerfiles
+- name: Fix Java service Dockerfiles to avoid Maven wrapper issues
+  replace:
+    path: "{{ app_dir }}/{{ item }}/Dockerfile"
+    regexp: '^(COPY \.mvn/ \.mvn/|COPY mvnw \.|COPY mvnw\.cmd \.)'
+    replace: '#\1'
+  loop:
+    - users-api
+    - auth-api
+    - todos-api
+  ignore_errors: yes
+  
+
 # Fix Docker build compatibility issues
 - name: Fix docker-compose.yml build contexts if needed
   replace:
