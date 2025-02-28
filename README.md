@@ -23,7 +23,7 @@ This repository contains the infrastructure-as-code (IaC) for deploying and mana
 
 TodoApp is a microservices-based application that provides user authentication, todo management, and activity logging across multiple interconnected services. This infrastructure repository automates the deployment and configuration of the entire application stack.
 
-![Architecture Diagram](image.png)
+![Architecture Diagram](images/image.png)
 
 ## Application Components
 
@@ -34,6 +34,8 @@ TodoApp consists of the following microservices:
 - **TODOs API**: Built with NodeJS, manages CRUD operations for todo records
 - **Users API**: A Spring Boot Java application for user profile management
 - **Log Message Processor**: Python service that processes messages from Redis queue
+
+![frontendUI](images/frontendUI.png)
 
 ## Repository Structure
 
@@ -109,7 +111,7 @@ ANSIBLE_TIMEOUT=3600 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ansible
 # For debugging issues, add the -vvv flag
 ANSIBLE_TIMEOUT=3600 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -vvv -i ansible/inventory.ini ansible/deploy.yml
 ```
-
+![todoApp](images/dashboard.png)
 ## Troubleshooting
 
 ### Common Issues
