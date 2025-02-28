@@ -1,0 +1,145 @@
+- name: Get domain name from server
+  command: cat /app_config/domain_name
+  register: domain_name_result
+  changed_when: false
+  ignore_errors: yes # Ignore errors if the file does not exist
+
+- name: Get app repo from server
+  command: cat /app_config/app_repo
+  register: app_repo_result
+  changed_when: false
+
+- name: Get email from server
+  command: cat /app_config/email
+  register: email_result
+  changed_when: false
+
+- name: Set fact variables
+  set_fact:
+    domain_name: "{{ domain_name_result.stdout | default(lookup('env', 'DOMAIN_NAME') | default('localhost')) }}"
+    app_repo: "{{ app_repo_result.stdout | default(lookup('env', 'APP_REPO')) }}"
+    email: "{{ email_result.stdout | default(lookup('env', 'ADMIN_EMAIL')) }}"
+
+
+- name: Create app directory
+  file:
+    path: "{{ app_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Clone application repository
+  git:
+    repo: "{{ app_repo }}"
+    dest: "{{ app_dir }}"
+    version: "fix/docker-build-compatibility"  # Update this to match your branch_name from tfvars
+    force: yes
+
+- name: Create environment file
+  template:
+    src: env.j2
+    dest: "{{ app_dir }}/.env"
+
+- name: Create traefik config
+  template:
+    src: traefik.toml.j2
+    dest: "{{ app_dir }}/traefik.toml"
+
+- name: Create acme.json file
+  file:
+    path: "{{ app_dir }}/acme.json"
+    state: touch
+    mode: '0600'
+
+- name: Check system resources
+  shell:
+    cmd: "free -m && cat /proc/cpuinfo | grep processor | wc -l"
+  register: system_resources
+  changed_when: false
+
+- name: Display system resources
+  debug:
+    var: system_resources.stdout_lines
+
+
+- name: Update domain in docker-compose.yml
+  replace:
+    path: "{{ app_dir }}/docker-compose.yml"
+    regexp: 'Host\(`localhost`\)'
+    replace: 'Host(`{{ domain_name }}`)'
+  when: domain_name != "localhost"
+
+# Ensure dummy build files exist before building Docker images
+
+- name: Ensure mvnw exists
+  stat:
+    path: "{{ app_dir }}/mvnw"
+  register: mvnw_stat
+
+# Create dummy files in each service directory
+- name: Create necessary directories for each service
+  file:
+    path: "{{ app_dir }}/{{ item }}/.mvn"
+    state: directory
+    mode: '0755'
+  loop:
+    - users-api
+    - auth-api
+    - todos-api
+    - log-message-processor
+    - frontend
+
+- name: Create dummy mvnw in each service directory
+  file:
+    path: "{{ app_dir }}/{{ item }}/mvnw"
+    state: touch
+    mode: '0755'
+  loop:
+    - users-api
+    - auth-api
+    - todos-api
+    - log-message-processor
+    - frontend
+
+- name: Create dummy mvnw.cmd in each service directory
+  file:
+    path: "{{ app_dir }}/{{ item }}/mvnw.cmd"
+    state: touch
+    mode: '0755'
+  loop:
+    - users-api
+    - auth-api
+    - todos-api
+    - log-message-processor
+    - frontend
+
+- name: Create dummy file in each .mvn directory
+  copy:
+    content: "dummy content"
+    dest: "{{ app_dir }}/{{ item }}/.mvn/dummy.txt"
+  loop:
+    - users-api
+    - auth-api
+    - todos-api
+    - log-message-processor
+    - frontend
+
+# Now trigger the docker-compose build
+- name: Build and start services sequentially
+  shell:
+    cmd: "cd {{ app_dir }} && docker-compose build {{ item }} && docker-compose up -d {{ item }}"
+    executable: /bin/bash
+  loop:
+    - redis-queue
+    - zipkin
+    - traefik
+    - users-api
+    - auth-api
+    - todos-api
+    - log-message-processor
+    - frontend
+  ignore_errors: yes
+
+
+
+
+
