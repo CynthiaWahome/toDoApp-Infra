@@ -1,0 +1,6 @@
+aws_region   = "us-west-1"
+instance_type = "t2.medium"
+key_name     = "your-ssh-key"
+domain_name  = "domainname.com"
+app_repo     = "https://github.com/yourusername/todoapp.git" # Your actual repository
+email        = "your-email@example.com" #for the SSL certificate provisioning
