@@ -123,6 +123,15 @@
     - log-message-processor
     - frontend
 
+# Fix Docker build compatibility issues
+- name: Fix docker-compose.yml build contexts if needed
+  replace:
+    path: "{{ app_dir }}/docker-compose.yml"
+    regexp: 'build: \./([a-zA-Z0-9_-]+)'
+    replace: 'build:\n      context: ./\1\n      dockerfile: Dockerfile'
+  ignore_errors: yes
+
+
 # Now trigger the docker-compose build
 - name: Build and start services sequentially
   shell:
