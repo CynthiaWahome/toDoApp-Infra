@@ -1,0 +1,20 @@
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
+terraform.tfvars
+terraform.tfstate*
+
+# Ansible
+*.retry
+inventory.ini
+
+# SSH keys
+*.pem
+*_key
+*_key.pub
+
+.env
+env.j2
+
